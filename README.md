@@ -1,2 +1,2 @@
-# n-h
-Kalkulačka pro výpočet, zdali se vyplatí více nájem nebo hypotéka.
+# Nájem nebo hypotéka?
+Kalkulačka pro výpočet, zdali se více vyplatí platit nájem nebo hypotéka.
