@@ -1,0 +1,43 @@
+@media (min-width: 1280px) {
+
+    body>footer,
+    body>header,
+    body>main {
+        max-width: 950px;
+    }
+}
+
+footer {
+    text-align: center;
+}
+
+tr>td:last-child {
+    text-align: right;
+}
+
+.form-group {
+    display: flex;
+    align-items: baseline;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.unit {
+    margin-left: var(--pico-spacing);
+    white-space: nowrap;
+}
+
+.stretched {
+    justify-content: space-between;
+}
+
+.info {
+    font-size: small;
+    background-color: var(--pico-text-selection-color);
+}
+
+#result {
+    font-weight: bold;
+}

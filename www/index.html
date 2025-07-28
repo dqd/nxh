@@ -8,16 +8,361 @@
     <meta name="color-scheme" content="light dark">
     <meta name="language" content="cs">
     <meta name="author" content="dqd">
+    <meta name="description"
+        content="Spočítejte si, zdali se vám vyplatí koupit si vlastní nemovitost, nebo platit pronájem.">
     <link rel="icon" href="./favicon.png" type="image/png">
     <link rel="stylesheet" type="text/css" href="./css/pico.classless.pumpkin.min.css">
-    <link rel="stylesheet" type="text/css" href="./css/style.css">
-    <script type="text/javascript" src="./js/script.js"></script>
+    <link rel="stylesheet" type="text/css" href="./css/style.css?0">
+    <script type="text/javascript" src="./js/script.js?0"></script>
 </head>
 
 <body>
     <main>
         <h1>Nájem nebo hypotéka?</h1>
+        <p>Tato informativní kalkulačka vám pomůže zjistit, zdali se vám více vyplatí koupit si nemovitost, nebo jít do
+            pronájmu. Případně zdali je dobrý nápad pořídit si investiční nemovitost a&nbsp;pronajímat ji.</p>
+        <noscript>
+            <p>Aplikace funguje pouze se zapnutým JavaScriptem.</p>
+        </noscript>
+        <article>
+            <header>Parametry nemovitosti</header>
+            <label>
+                Typ bydlení
+                <select name="type" id="type">
+                    <option value="apartment">Byt</option>
+                    <option value="house">Dům</option>
+                </select>
+            </label>
+            <label>
+                Lokalita
+                <select name="location" id="location">
+                </select>
+            </label>
+            <label>
+                Užitná plocha
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="area" id="area" type="number" min="1" value="75">
+                        <small>Jedna se o&nbsp;součet plošné výměry všech místností uvnitř vnějších stěn, tedy bez
+                            příček, balkonu, lodžie, terasy, chodby, sklepních prostor atd.</small>
+                    </div>
+                    <div class="unit">m&sup2;</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Cena nemovitosti</header>
+            <label>
+                <div class="form-group stretched">
+                    <div>Kupní cena</div>
+                    <div class="info">Průměr za <span id="buying-price-quarter"></span>: <span
+                            id="buying-price-average"></span>&nbsp;Kč/m&sup2;</div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="buying-price" id="buying-price" type="text">
+                        <small>Včetně provize realitní kanceláře a&nbsp;veškerých poplatků (právní služby, vklad do
+                            katastru atd.).</small>
+                    </div>
+                    <div class="unit">Kč</div>
+                </div>
+            </label>
+            <label>
+                <div class="form-group stretched">
+                    <div>Očekávaný růst ceny nemovitosti</div>
+                    <div class="info">Od předchozího období <span id="buying-price-difference"></span></div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="buying-price-increase" id="buying-price-increase" type="number" value="5">
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Nájemné</header>
+            <label>
+                <div class="form-group stretched">
+                    <div>Výše nájemného</div>
+                    <div class="info">Průměr za <span id="renting-price-quarter"></span>: <span
+                            id="renting-price-average"></span>&nbsp;Kč/m&sup2;/měsíc
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="renting-price" id="renting-price" type="text">
+                        <small>Bez záloh na energie a&nbsp;služby.</small>
+                    </div>
+                    <div class="unit">Kč/měsíc</div>
+                </div>
+            </label>
+            <label>
+                Provize realitní kanceláři
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="commission" id="commission" type="text">
+                    </div>
+                    <div class="unit">Kč</div>
+                </div>
+            </label>
+            <label>
+                <div class="form-group stretched">
+                    <div>Očekávaný růst nájemného</div>
+                    <div class="info">Od předchozího období <span id="renting-price-difference"></span></div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="5">
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Financování</header>
+            <label>
+                <span data-tooltip="Loan-to-Value, tedy půjčka ke kupní ceně">LTV</span> hypotečního úvěru
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="ltv" id="ltv" type="number" min="0" max="100" step="any" value="80">
+                        <small>Pro žadatele do 36 let je maximum 90&nbsp;%, jinak 80&nbsp;%.</small>
+                    </div>
+                    <div class="unit">%</div>
+                </div>
+            </label>
+            <label>
+                Úroková sazba
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="interest-rate" id="interest-rate" type="number" min="0" step="any">
+                    </div>
+                    <div class="unit">%</div>
+                </div>
+            </label>
+            <label>
+                Doba splatnosti hypotečního úvěru
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="maturity" id="maturity" type="number" min="1" max="50" value="30">
+                    </div>
+                    <div class="unit">roků</div>
+                </div>
+            </label>
+            <label>
+                Vlastní zdroje
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="downpayment" id="downpayment" type="text">
+                    </div>
+                    <div class="unit">Kč</div>
+                </div>
+            </label>
+            <hr>
+            <table>
+                <tr>
+                    <th>Výše hypotečního úvěru</th>
+                    <td><span id="mortgage"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Měsíční splátka</th>
+                    <td><span id="payment"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Zaplaceno celkem</th>
+                    <td><span id="paid"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Zaplacený úrok</th>
+                    <td><span id="interest"></span>&nbsp;Kč</td>
+                </tr>
+            </table>
+        </article>
+        <article>
+            <header>Náklady</header>
+            <label>
+                Opotřebení nemovitosti
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="depreciation" id="depreciation" type="number" min="0" step="any" value="1">
+                        <small>Náklady na údržbu a&nbsp;na rekonstrukci. Počítá se z&nbsp;ceny nemovitosti.</small>
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+            <label>
+                Náklady obětované příležitosti
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="opportunity-costs" id="opportunity-costs" type="number" min="0" step="any"
+                            value="10">
+                        <small>Jaký průměrný výnos by byl z&nbsp;alternativního investování nevyužitých
+                            prostředků.</small>
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+            <label>
+                Pojištění nemovitosti
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="insurance" id="insurance" type="text">
+                    </div>
+                    <div class="unit">Kč/rok</div>
+                </div>
+            </label>
+            <label>
+                Platba <span data-tooltip="Společenství vlastníků jednotek">SVJ</span>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="hoa" id="hoa" type="text">
+                        <small>Příspěvek do fondu oprav, platba za správu bytového domu a&nbsp;za společné energie
+                            a&nbsp;služby.</small>
+                    </div>
+                    <div class="unit">Kč/měsíc</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Daň z&nbsp;nemovitých věcí</header>
+            <p><a href="javascript:" id="show-property-tax-calculation">Zobrazit podrobný výpočet</a></p>
+            <label hidden>
+                <div id="property-tax-label"></div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="property-tax-area" id="property-tax-area" type="number" min="1">
+                        <small id="property-tax-description"></small>
+                    </div>
+                    <div class="unit">m&sup2;</div>
+                </div>
+            </label>
+            <label hidden>
+                Počet dalších nadzemních podlaží
+                <input name="property-tax-storeys" id="property-tax-storeys" type="number" min="0" value="0">
+                <small>Mimo přízemí.</small>
+            </label>
+            <label hidden>
+                Koeficient dle velikosti obce
+                <input name="property-tax-coefficient" id="property-tax-coefficient" type="number" min="1" max="5"
+                    step="0.1">
+                <small>Hodnoty koeficientů pro konkrétní nemovitost naleznete ve <a
+                        href="https://adisspr.mfcr.cz/pmd/vyhledani-koeficientu">webové aplikaci Ministerstva
+                        financí</a>.</small>
+            </label>
+            <label hidden>
+                Místní koeficient
+                <input name="property-tax-coefficient-local" id="property-tax-coefficient-local" type="number" min="0.5"
+                    max="5" step="0.1" value="1">
+            </label>
+            <label hidden>
+                Inflační koeficient
+                <input name="property-tax-coefficient-inflation" id="property-tax-coefficient-inflation" type="number"
+                    min="1" step="0.1" value="1">
+            </label>
+            <label>
+                Výše daně
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="property-tax" id="property-tax" type="text">
+                    </div>
+                    <div class="unit">Kč/rok</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Daň z&nbsp;příjmů fyzických osob</header>
+            <label>
+                Jakou část opotřebení zahrnu do nákladů
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="allowable-depreciation" id="allowable-depreciation" type="number" min="0" max="100"
+                            step="any" value="50">
+                        <small>Průměrné roční náklady na opotřebení jsou <span
+                                id="depreciation-costs"></span>&nbsp;Kč.</small>
+                    </div>
+                    <div class="unit">%</div>
+                </div>
+            </label>
+            <label>
+                <input name="self-employed" id="self-employed" type="checkbox" role="switch">
+                Jsem <span data-tooltip="Osoba samostatně výdělečně činná">OSVČ</span> a&nbsp;neplatím paušální daň
+            </label>
+            <hr>
+            <table>
+                <tr>
+                    <th>Průměrné roční <span
+                            data-tooltip="Počítá se jako 30 % příjmu z nájemného, maximálně však 600 tisíc Kč.">výdaje
+                            procentem</span></th>
+                    <td><span id="expenses"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Průměrné roční výdaje dle daňové evidence</th>
+                    <td><span id="real-expenses"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Průměrná roční <span
+                            data-tooltip="Kladná částka znamená nárůst daně, záporná snížení daně.">změna daně</span>
+                    </th>
+                    <td><span id="annual-tax"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Platba daně při prodeji nemovitosti</th>
+                    <td><span id="sale-tax"></span>&nbsp;Kč</td>
+                </tr>
+            </table>
+            </p>
+        </article>
+        <article>
+            <header>Vlastnictví</header>
+            <label>
+                Doba vlastnictví nemovitosti
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="duration" id="duration" type="number" min="1" value="10">
+                        <small>Pokud neplánujete nemovitost prodat, zadejte nějaké vysoké číslo, například
+                            50&nbsp;roků.</small>
+                    </div>
+                    <div class="unit">roků</div>
+                </div>
+            </label>
+            <label>
+                Účel vlastnictví
+                <select name="purpose" id="purpose">
+                    <option value="inhabitation">Budu v&nbsp;nemovitosti bydlet</option>
+                    <option value="rental">Nemovitost pronajmu jiným osobám</option>
+                </select>
+            </label>
+        </article>
+        <article>
+            <header>Výsledek</header>
+            <p id="result"></p>
+            <table>
+                <tr>
+                    <th>Výnos z prodeje nemovitosti</th>
+                    <td><span id="result-buying"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Náklady na zakoupenou nemovitost</th>
+                    <td><span id="result-costs"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th><span id="result-renting-text"></span></th>
+                    <td><span id="result-renting"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Výnosy z alternativní investice</th>
+                    <td><span id="result-opportunity-costs"></span>&nbsp;Kč</td>
+                </tr>
+            </table>
+        </article>
     </main>
+    <footer>
+        <small>
+            V&nbsp;roce 2025 vytvořil <a href="https://dqd.cz/">dqd</a> &bull; <a
+                href="https://github.com/dqd/nxh">zdrojové kódy</a> &bull; <a
+                href="https://www.sreality.cz/ceny-nemovitosti">ceny nemovitostí</a>
+        </small>
+    </footer>
 </body>
 
 </html>

@@ -2,8 +2,8 @@ name: Fetch quarterly prices
 
 on:
   schedule:
-    # 15th day of every 3rd month at 02:04 UTC → Jan, Apr, Jul, Oct
-    - cron: "4 2 15 */3 *"
+    # every Saturday at 02:04 UTC
+    - cron: "4 2 * * 6"
   workflow_dispatch: {}
 
 permissions:

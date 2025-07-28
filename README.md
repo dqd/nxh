@@ -1,2 +1,4 @@
 # Nájem nebo hypotéka?
-Kalkulačka pro výpočet, zdali se více vyplatí platit nájem nebo hypotéka.
+Vyplatí se více platit nájem, nebo si vzít hypotéku? Tato kalkulačka pomůže v rozhodování.
+
+Webové stránky jsou přístupné z [nxh.cz](https://nxh.cz/) (**n**ájem **x** **h**ypotéka).
