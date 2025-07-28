@@ -13,6 +13,7 @@ footer {
 
 tr>td:last-child {
     text-align: right;
+    white-space: nowrap;
 }
 
 .form-group {
