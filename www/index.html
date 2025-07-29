@@ -13,7 +13,7 @@
     <link rel="icon" href="./favicon.png" type="image/png">
     <link rel="stylesheet" type="text/css" href="./css/pico.classless.pumpkin.min.css">
     <link rel="stylesheet" type="text/css" href="./css/style.css?1">
-    <script type="text/javascript" src="./js/script.js?1"></script>
+    <script type="text/javascript" src="./js/script.js?2"></script>
 </head>
 
 <body>
@@ -21,6 +21,8 @@
         <h1>Nájem nebo hypotéka?</h1>
         <p>Tato informativní kalkulačka vám pomůže zjistit, zdali se vám více vyplatí koupit si nemovitost, nebo jít do
             pronájmu. Případně zdali je dobrý nápad pořídit si investiční nemovitost a&nbsp;pronajímat ji.</p>
+        <p>K&nbsp;učinění natolik velkého rozhodnutí nestačí jednoduše porovnat výši nájemného a&nbsp;splátku úvěru. Je
+            nutné také zvážit náklady plynoucí z&nbsp;vlastnictví a&nbsp;daňové dopady.</p>
         <noscript>
             <p>Aplikace funguje pouze se zapnutým JavaScriptem.</p>
         </noscript>
@@ -113,7 +115,7 @@
                 </div>
                 <div class="form-group">
                     <div class="full-width">
-                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="5">
+                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="4">
                     </div>
                     <div class="unit">%/rok</div>
                 </div>
@@ -132,7 +134,7 @@
                 </div>
             </label>
             <label>
-                Úroková sazba
+                Úroková sazba hypotečního úvěru
                 <div class="form-group">
                     <div class="full-width">
                         <input name="interest-rate" id="interest-rate" type="number" min="0" step="any">
@@ -185,7 +187,8 @@
                 <div class="form-group">
                     <div class="full-width">
                         <input name="depreciation" id="depreciation" type="number" min="0" step="any" value="1">
-                        <small>Náklady na údržbu a&nbsp;na rekonstrukci. Počítá se z&nbsp;ceny nemovitosti.</small>
+                        <small>Náklady na údržbu a&nbsp;na rekonstrukci. Počítá se z&nbsp;ceny nemovitosti, což vychází
+                            v&nbsp;průměru na <span id="depreciation-costs"></span>&nbsp;Kč.</small>
                     </div>
                     <div class="unit">%/rok</div>
                 </div>
@@ -272,15 +275,15 @@
         <article>
             <header>Daň z&nbsp;příjmů fyzických osob</header>
             <label>
-                Jakou část opotřebení zahrnu do nákladů
+                Průměrné výdaje na opravy a udržování majetku
                 <div class="form-group">
                     <div class="full-width">
-                        <input name="allowable-depreciation" id="allowable-depreciation" type="number" min="0" max="100"
-                            step="any" value="50">
-                        <small>Průměrné roční náklady na opotřebení jsou <span
-                                id="depreciation-costs"></span>&nbsp;Kč.</small>
+                        <input name="allowable-depreciation" id="allowable-depreciation" type="text"
+                            value="10&nbsp;000">
+                        <small>Zákonný limit je 80&nbsp;000&nbsp;Kč ročně. Nad tuto částku se jedná o technické
+                            zhodnocení, které přechází do odpisů.</small>
                     </div>
-                    <div class="unit">%</div>
+                    <div class="unit">Kč/rok</div>
                 </div>
             </label>
             <label>
@@ -296,7 +299,9 @@
                     <td><span id="expenses"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
-                    <th>Průměrné roční výdaje dle daňové evidence</th>
+                    <th>Průměrné roční výdaje dle <span
+                            data-tooltip="Odpisy, úroky z hypotečního úvěru, pojištění, platby SVJ, daň z nemovitých věcí, opravy a údržba.">daňové
+                            evidence</span></th>
                     <td><span id="real-expenses"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
@@ -320,7 +325,7 @@
                     <div class="full-width">
                         <input name="duration" id="duration" type="number" min="1" value="10">
                         <small>Pokud neplánujete nemovitost prodat, zadejte nějaké vysoké číslo, například
-                            50&nbsp;roků.</small>
+                            30&nbsp;roků.</small>
                     </div>
                     <div class="unit">roků</div>
                 </div>
@@ -338,7 +343,7 @@
             <p id="result"></p>
             <table>
                 <tr>
-                    <th>Výnos z prodeje nemovitosti</th>
+                    <th>Zisk z&nbsp;prodeje nemovitosti</th>
                     <td><span id="result-buying"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
@@ -350,7 +355,7 @@
                     <td><span id="result-renting"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
-                    <th>Výnosy z alternativní investice</th>
+                    <th>Výnosy z&nbsp;alternativní investice</th>
                     <td><span id="result-opportunity-costs"></span>&nbsp;Kč</td>
                 </tr>
             </table>

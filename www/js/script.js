@@ -134,7 +134,8 @@ const INCOME_TAX = 0.15,
     EXPENSES_RATE = 0.3,
     EXPENSES_CEILING = 2000000,
     MORTGAGE_CEILING = 150000,
-    WRITE_OFF_YEARS = 30;
+    WRITE_OFF_YEARS = 30,
+    TAXABLE_INVESTMENT_YEARS = 3;
 
 
 function fillLocations() {
@@ -174,7 +175,7 @@ function fillLocations() {
 }
 
 function formatNumber(number) {
-    return Math.trunc(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return Math.trunc(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\xa0");
 }
 
 function formatPercent(number) {
@@ -218,7 +219,7 @@ function setPrice() {
 }
 
 function estimateCommission() {
-    let price = parseInt(document.getElementById("renting-price").value.replaceAll(" ", ""), 10) || 0;
+    let price = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0;
     document.getElementById("commission").value = formatNumber((price > EXPENSIVE_RENT ? 1 : 2) * price);
 }
 
@@ -245,7 +246,7 @@ function calculatePayments(mortgage) {
 }
 
 function calculateMortgage() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll(" ", ""), 10) || 0,
+    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
         ltv = parseFloat(document.getElementById("ltv").value);
 
     if (ltv) {
@@ -258,8 +259,8 @@ function calculateMortgage() {
 }
 
 function calculateLTV() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll(" ", ""), 10) || 0,
-        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll(" ", ""), 10) || 0,
+    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
+        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll("\xa0", ""), 10) || 0,
         mortgage = price - downpayment;
 
     document.getElementById("ltv").value = (mortgage / price * 100).toFixed(3);
@@ -267,7 +268,7 @@ function calculateLTV() {
 }
 
 function estimateInsurance() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll(" ", ""), 10) || 0,
+    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
         insuranceInput = document.getElementById("insurance");
     insuranceInput.value = formatNumber(Math.round(price / Math.pow(10, 5)) * Math.pow(10, 2));
     insuranceInput.dispatchEvent(new Event("change"));
@@ -350,20 +351,20 @@ function calculateProfitability() {
     calculateIncomeTax();
 
     let isRental = document.getElementById("purpose").value === "rental",
-        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll(" ", ""), 10) || 0,
+        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
         buyingPriceIncrease = parseInt(document.getElementById("buying-price-increase").value, 10) || 0,
-        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll(" ", ""), 10) || 0,
+        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0,
         rentingPriceIncrease = parseInt(document.getElementById("renting-price-increase").value, 10) || 0,
-        commission = parseInt(document.getElementById("commission").value.replaceAll(" ", ""), 10) || 0,
+        commission = parseInt(document.getElementById("commission").value.replaceAll("\xa0", ""), 10) || 0,
         depreciationRate = parseFloat(document.getElementById("depreciation").value) || 0,
         opportunityRate = parseFloat(document.getElementById("opportunity-costs").value),
         duration = parseInt(document.getElementById("duration").value, 10) || 0,
-        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll(" ", ""), 10) || 0,
-        insurance = parseInt(document.getElementById("insurance").value.replaceAll(" ", ""), 10) || 0,
-        hoa = parseInt(document.getElementById("hoa").value.replaceAll(" ", ""), 10) || 0,
-        propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll(" ", ""), 10) || 0,
-        annualTax = parseInt(document.getElementById("annual-tax").textContent.replaceAll(" ", ""), 10) || 0,
-        saleTax = parseInt(document.getElementById("sale-tax").textContent.replaceAll(" ", ""), 10) || 0,
+        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll("\xa0", ""), 10) || 0,
+        insurance = parseInt(document.getElementById("insurance").value.replaceAll("\xa0", ""), 10) || 0,
+        hoa = parseInt(document.getElementById("hoa").value.replaceAll("\xa0", ""), 10) || 0,
+        propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll("\xa0", ""), 10) || 0,
+        annualTax = parseInt(document.getElementById("annual-tax").textContent.replaceAll("\xa0", ""), 10) || 0,
+        saleTax = parseInt(document.getElementById("sale-tax").textContent.replaceAll("\xa0", ""), 10) || 0,
         interests = calculateInterests(duration),
         renting = isRental ? 0 : commission,
         buying = 0,
@@ -385,14 +386,18 @@ function calculateProfitability() {
         }
     });
 
+    if (duration < TAXABLE_INVESTMENT_YEARS) {
+        opportunityCosts *= 1 - INCOME_TAX;
+    }
+
     let option,
         rentText,
         profit = increasedPrice - buyingPrice - saleTax,
         shouldBuy = renting - buying + profit > opportunityCosts;
 
     if (isRental) {
-        option = shouldBuy ? "koupit a pronajímat nemovitost" : "investovat jinde";
-        rentText = "Příjmy z pronájmu";
+        option = shouldBuy ? "koupit a pronajímat nemovitost" : "investovat jinam";
+        rentText = "Příjmy z pronájmu po zdanění";
     } else {
         option = shouldBuy ? "koupit nemovitost" : "jít do pronájmu";
         rentText = "Náklady za nájemné";
@@ -407,8 +412,8 @@ function calculateProfitability() {
 }
 
 function calculateInterests(years) {
-    let mortgage = parseInt(document.getElementById("mortgage").textContent.replaceAll(" ", ""), 10) || 0,
-        payment = parseInt(document.getElementById("payment").textContent.replaceAll(" ", ""), 10) || 0,
+    let mortgage = parseInt(document.getElementById("mortgage").textContent.replaceAll("\xa0", ""), 10) || 0,
+        payment = parseInt(document.getElementById("payment").textContent.replaceAll("\xa0", ""), 10) || 0,
         monthlyRate = parseFloat(document.getElementById("interest-rate").value) / (100 * 12),
         interests = [];
 
@@ -436,9 +441,9 @@ function calculateIncomeTax() {
     let isRental = document.getElementById("purpose").value === "rental",
         minDuration = isRental ? 10 : 2,
         duration = parseInt(document.getElementById("duration").value, 10) || 0,
-        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll(" ", ""), 10) || 0,
+        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
         buyingPriceIncrease = parseInt(document.getElementById("buying-price-increase").value, 10) || 0,
-        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll(" ", ""), 10) || 0,
+        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0,
         rentingPriceIncrease = parseInt(document.getElementById("renting-price-increase").value, 10) || 0,
         monthlyRate = parseFloat(document.getElementById("interest-rate").value) / (100 * 12),
         isSelfEmployed = document.getElementById("self-employed").checked,
@@ -451,16 +456,15 @@ function calculateIncomeTax() {
     if (isRental) {
         let residualPrice = buyingPrice,
             interests = calculateInterests(duration),
-            hoa = parseInt(document.getElementById("hoa").value.replaceAll(" ", ""), 10) || 0,
-            insurance = parseInt(document.getElementById("insurance").value.replaceAll(" ", ""), 10) || 0,
-            propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll(" ", ""), 10) || 0,
-            allowableDepreciation = parseFloat(document.getElementById("allowable-depreciation").value);
+            hoa = parseInt(document.getElementById("hoa").value.replaceAll("\xa0", ""), 10) || 0,
+            insurance = parseInt(document.getElementById("insurance").value.replaceAll("\xa0", ""), 10) || 0,
+            propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll("\xa0", ""), 10) || 0,
+            allowableDepreciation = parseInt(document.getElementById("allowable-depreciation").value.replaceAll("\xa0", ""), 10) || 0;
 
         for (let i = 0; i < duration; i++) {
             let income = Math.round(rentingPrice * Math.pow(1 + rentingPriceIncrease / 100, i)) * 12,
                 expenses = Math.min(income * EXPENSES_RATE, EXPENSES_CEILING * EXPENSES_RATE),
-                writeOff = Math.ceil((i ? 2 : 1) * residualPrice / (WRITE_OFF_YEARS - (i ? i - 1 : 0))),
-                depreciation = depreciationRate / 100 * buyingPrice * Math.pow(1 + buyingPriceIncrease / 100, i);
+                writeOff = Math.ceil((i ? 2 : 1) * residualPrice / (WRITE_OFF_YEARS - (i ? i - 1 : 0)));
 
             if (residualPrice > writeOff) {
                 residualPrice -= writeOff;
@@ -469,7 +473,7 @@ function calculateIncomeTax() {
                 residualPrice = 0;
             }
 
-            let realExpenses = writeOff + interests[i] + 12 * hoa + insurance + propertyTax + depreciation * allowableDepreciation / 100;
+            let realExpenses = writeOff + interests[i] + 12 * hoa + insurance + propertyTax + allowableDepreciation;
             totalExpenses += expenses;
             totalRealExpenses += realExpenses;
 
@@ -491,7 +495,7 @@ function calculateIncomeTax() {
     }
 
     document.getElementById("depreciation-costs").textContent = formatNumber(
-        Math.round(depreciationRate / 100 * buyingPrice * (1 + Math.pow(1 + buyingPriceIncrease / 100, duration)) / (2 * duration))
+        Math.round(depreciationRate / 100 * buyingPrice * (1 + Math.pow(1 + buyingPriceIncrease / 100, duration)) / 2)
     );
 
     document.getElementById("expenses").textContent = formatNumber(Math.round(totalExpenses / duration));
@@ -528,15 +532,16 @@ document.addEventListener("DOMContentLoaded", async function() {
         "downpayment",
         "insurance",
         "hoa",
-        "property-tax"
+        "property-tax",
+        "allowable-depreciation"
     ].forEach(function(identifier) {
         let input = document.getElementById(identifier);
 
         input.addEventListener("focus", function() {
-            input.value = input.value.replaceAll(" ", "");
+            input.value = input.value.replaceAll("\xa0", "");
         });
         input.addEventListener("blur", function() {
-            input.value = input.value.replaceAll(" ", "");
+            input.value = input.value.replaceAll("\xa0", "");
 
             if (parseInt(input.value, 10) > 0) {
                 input.value = formatNumber(input.value);
