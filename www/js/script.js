@@ -397,10 +397,10 @@ function calculateProfitability() {
 
     if (isRental) {
         option = shouldBuy ? "koupit a pronajímat nemovitost" : "investovat jinam";
-        rentText = "Příjmy z pronájmu po zdanění";
+        rentText = "Výnosy z pronájmu po zdanění";
     } else {
         option = shouldBuy ? "koupit nemovitost" : "jít do pronájmu";
-        rentText = "Náklady za nájemné";
+        rentText = "Zaplaceno za nájemné";
     }
 
     document.getElementById("result").textContent = `V tomto případě se více vyplatí ${option}.`;
