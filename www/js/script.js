@@ -543,7 +543,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         input.addEventListener("blur", function() {
             input.value = input.value.replaceAll("\xa0", "");
 
-            if (parseInt(input.value, 10) > 0) {
+            if (parseInt(input.value, 10) >= 0) {
                 input.value = formatNumber(input.value);
             } else {
                 input.value = "";
