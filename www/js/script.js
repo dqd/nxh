@@ -1,4 +1,6 @@
-let prices;
+let prices,
+    chart,
+    blank;
 const regions = {
     "Hlavní město Praha": [
         "Praha 1",
@@ -133,10 +135,11 @@ const INCOME_TAX = 0.15,
     COEFFICIENT_DEFAULT = 2.5,
     EXPENSES_RATE = 0.3,
     EXPENSES_CEILING = 2000000,
+    MAINTENANCE_DEFAULT = 0.1,
+    MAINTENANCE_CEILING = 80000,
     MORTGAGE_CEILING = 150000,
     WRITE_OFF_YEARS = 30,
     TAXABLE_INVESTMENT_YEARS = 3;
-
 
 function fillLocations() {
     // sanity check: do the districts match?
@@ -174,6 +177,11 @@ function fillLocations() {
     }
 }
 
+function getNumber(identifier, isText) {
+    let parent = isText ? "textContent" : "value";
+    return parseInt(document.getElementById(identifier)[parent].replaceAll("\xa0", ""), 10) || 0;
+}
+
 function formatNumber(number) {
     return Math.trunc(number).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\xa0");
 }
@@ -183,7 +191,8 @@ function formatPercent(number) {
 }
 
 function estimatePrice(ppsmRef, area, alpha) {
-    return ppsmRef * Math.max(MIN_FACTOR, Math.min(MAX_FACTOR, Math.pow(area / REF_SIZE, -alpha))) * area;
+    let condition = parseInt(document.getElementById("condition").value) || 0;
+    return ppsmRef * Math.max(MIN_FACTOR, Math.min(MAX_FACTOR, Math.pow(area / REF_SIZE, -alpha))) * area * (1 + condition / 100);
 }
 
 function setPrice() {
@@ -219,7 +228,7 @@ function setPrice() {
 }
 
 function estimateCommission() {
-    let price = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0;
+    let price = getNumber("renting-price");
     document.getElementById("commission").value = formatNumber((price > EXPENSIVE_RENT ? 1 : 2) * price);
 }
 
@@ -246,7 +255,7 @@ function calculatePayments(mortgage) {
 }
 
 function calculateMortgage() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
+    let price = getNumber("buying-price"),
         ltv = parseFloat(document.getElementById("ltv").value);
 
     if (ltv) {
@@ -259,16 +268,25 @@ function calculateMortgage() {
 }
 
 function calculateLTV() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
-        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll("\xa0", ""), 10) || 0,
+    let price = getNumber("buying-price"),
+        downpayment = getNumber("downpayment"),
         mortgage = price - downpayment;
 
     document.getElementById("ltv").value = (mortgage / price * 100).toFixed(3);
     calculatePayments(mortgage);
 }
 
+function estimateMaintenance() {
+    let price = getNumber("buying-price"),
+        type = document.getElementById("type").value,
+        maintenance = (type == "apartment" ? 1 : 2) * MAINTENANCE_DEFAULT;
+
+    document.getElementById("maintenance").value = maintenance;
+    document.getElementById("maintenance-costs").textContent = formatNumber(price * maintenance / 100);
+}
+
 function estimateInsurance() {
-    let price = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
+    let price = getNumber("buying-price"),
         insuranceInput = document.getElementById("insurance");
     insuranceInput.value = formatNumber(Math.round(price / Math.pow(10, 5)) * Math.pow(10, 2));
     insuranceInput.dispatchEvent(new Event("change"));
@@ -285,6 +303,58 @@ function estimateHOAPayments() {
         hoaInput.value = formatNumber(0);
     }
     hoaInput.dispatchEvent(new Event("change"));
+}
+
+function getRenovations(year) {
+    let conditions = document.getElementById("condition").options,
+        renovationFrequency = parseInt(document.getElementById("renovation-frequency").value, 10) || 0,
+        renovationYear = 0,
+        renovations = [];
+
+    for (let i = 0; i < conditions.length; i++) {
+        if (conditions[i].selected) {
+            renovationYear = Math.round((conditions.length - i - 1) * renovationFrequency / (conditions.length - 1));
+            break;
+        }
+    }
+
+    while (renovationFrequency && renovationYear <= year) {
+        renovations.push(renovationYear);
+        renovationYear += renovationFrequency;
+    }
+
+    return renovations;
+}
+
+function getDeteriorationRate(conditions) {
+    let renovationFrequency = parseInt(document.getElementById("renovation-frequency").value, 10) || 0;
+    return (conditions.length - 1) * (parseInt(conditions[conditions.length - 1].value) || 0) / renovationFrequency;
+}
+
+function getPriceProgress(duration) {
+    let buyingPrice = getNumber("buying-price"),
+        buyingPriceIncrease = parseInt(document.getElementById("buying-price-increase").value, 10) || 0,
+        conditions = document.getElementById("condition").options,
+        renovationBonus = parseInt(conditions[0].value) || 0,
+        deteriorationRate = getDeteriorationRate(conditions),
+        renovations = getRenovations(duration),
+        renovationCosts = parseFloat(document.getElementById("renovation-costs").value) || 0,
+        price = buyingPrice,
+        progress = [buyingPrice];
+
+    for (let i = 0; i < duration; i++) {
+        price *= 1 + buyingPriceIncrease / 100;
+
+        if (renovations.includes(i)) {
+            price *= 1 + (renovationBonus + renovationCosts) / 100;
+        } else {
+            price *= 1 + deteriorationRate / 100;
+        }
+
+        progress.push(price);
+    }
+
+    return progress;
 }
 
 function calculatePropertyTax() {
@@ -351,69 +421,175 @@ function calculateProfitability() {
     calculateIncomeTax();
 
     let isRental = document.getElementById("purpose").value === "rental",
-        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
-        buyingPriceIncrease = parseInt(document.getElementById("buying-price-increase").value, 10) || 0,
-        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0,
+        rentingPrice = getNumber("renting-price"),
         rentingPriceIncrease = parseInt(document.getElementById("renting-price-increase").value, 10) || 0,
-        commission = parseInt(document.getElementById("commission").value.replaceAll("\xa0", ""), 10) || 0,
-        depreciationRate = parseFloat(document.getElementById("depreciation").value) || 0,
+        commission = getNumber("commission"),
         opportunityRate = parseFloat(document.getElementById("opportunity-costs").value),
         duration = parseInt(document.getElementById("duration").value, 10) || 0,
-        downpayment = parseInt(document.getElementById("downpayment").value.replaceAll("\xa0", ""), 10) || 0,
-        insurance = parseInt(document.getElementById("insurance").value.replaceAll("\xa0", ""), 10) || 0,
-        hoa = parseInt(document.getElementById("hoa").value.replaceAll("\xa0", ""), 10) || 0,
-        propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll("\xa0", ""), 10) || 0,
-        annualTax = parseInt(document.getElementById("annual-tax").textContent.replaceAll("\xa0", ""), 10) || 0,
-        saleTax = parseInt(document.getElementById("sale-tax").textContent.replaceAll("\xa0", ""), 10) || 0,
+        priceProgress = getPriceProgress(duration),
+        downpayment = getNumber("downpayment"),
+        insurance = getNumber("insurance"),
+        hoa = getNumber("hoa"),
+        propertyTax = getNumber("property-tax"),
+        annualTax = getNumber("annual-tax", true),
+        saleTax = getNumber("sale-tax", true),
+        payment = getNumber("payment", true) * 12,
         interests = calculateInterests(duration),
-        renting = isRental ? 0 : commission,
-        buying = 0,
-        opportunityCosts = downpayment * (Math.pow(1 + opportunityRate / 100, duration) - 1),
-        increasedPrice;
+        maintenance = parseFloat(document.getElementById("maintenance").value),
+        renovations = getRenovations(duration),
+        renovationCosts = parseFloat(document.getElementById("renovation-costs").value) || 0,
+        renting = [downpayment],
+        buying = [downpayment],
+        investment = downpayment,
+        equity = downpayment,
+        rentingCosts = 0,
+        buyingCosts = 0,
+        opportunityCosts = 0,
+        extra = 0,
+        increasedPrice = priceProgress[0],
+        remainingMortgage = getNumber("mortgage", true),
+        increments = [];
 
     interests.forEach(function(interest, i) {
-        increasedPrice = buyingPrice * Math.pow(1 + buyingPriceIncrease / 100, (i + 1));
-
         let rent = Math.round(rentingPrice * Math.pow(1 + rentingPriceIncrease / 100, i)) * 12 * (isRental ? (1 - INCOME_TAX) : 1),
-            depreciation = depreciationRate / 100 * increasedPrice,
-            costs = interest + depreciation + insurance + hoa + propertyTax + annualTax;
+            costs = interest + priceProgress[i] * maintenance / 100 + insurance + hoa + propertyTax + annualTax,
+            growth = priceProgress[i + 1] - priceProgress[i],
+            increment = investment * opportunityRate / 100;
 
-        renting += rent;
-        buying += costs;
-
-        if (rent < costs) {
-            opportunityCosts += (costs - rent) * (Math.pow(1 + opportunityRate / 100, duration - i) - 1);
+        if (renovations.includes(i)) {
+            costs += priceProgress[i] * renovationCosts / 100;
         }
+
+        if (remainingMortgage > 0) {
+            remainingMortgage -= payment;
+            growth += payment;
+        } else {
+            remainingMortgage = 0;
+        }
+
+        let compensation;
+
+        if (isRental) {
+            compensation = costs > growth ? costs - growth : 0;
+            investment += increment + costs + compensation;
+            equity += growth - costs + compensation + rent;
+        } else {
+            if (!i) {
+                rent += commission;
+            }
+
+            compensation = rent > costs ? rent - costs : 0;
+            investment += increment + costs - rent + compensation;
+            equity += growth - costs + compensation + extra * opportunityRate / 100;
+            extra += compensation;
+        }
+
+        opportunityCosts += increment;
+        increasedPrice += growth;
+        rentingCosts += rent;
+        buyingCosts += costs;
+
+        renting.push(Math.round(investment));
+        buying.push(Math.round(equity));
+        increments.push(increment);
     });
 
-    if (duration < TAXABLE_INVESTMENT_YEARS) {
-        opportunityCosts *= 1 - INCOME_TAX;
-    }
+    let investmentTax = increments.slice(-TAXABLE_INVESTMENT_YEARS).reduce(
+        (acc, x) => acc + x * INCOME_TAX, 0
+    );
+    opportunityCosts -= investmentTax;
+    renting[renting.length - 1] -= Math.round(investmentTax);
 
-    let option,
-        rentText,
-        profit = increasedPrice - buyingPrice - saleTax,
-        shouldBuy = renting - buying + profit > opportunityCosts;
+    buyingCosts += saleTax;
+    buying[buying.length - 1] -= Math.round(saleTax);
+
+    let options,
+        rentText;
 
     if (isRental) {
-        option = shouldBuy ? "koupit a pronajímat nemovitost" : "investovat jinam";
+        options = ["investovat jinam", "koupit a pronajímat nemovitost"];
         rentText = "Výnosy z pronájmu po zdanění";
     } else {
-        option = shouldBuy ? "koupit nemovitost" : "jít do pronájmu";
+        options = ["jít do pronájmu", "koupit nemovitost"];
         rentText = "Zaplaceno za nájemné";
     }
 
+    if (chart) {
+        chart.destroy();
+    }
+
+    let annotations = {};
+
+    renovations.forEach(function(renovation, i) {
+        annotations[`line${i + 1}`] = {
+            type: "box",
+            scaleID: "x",
+            xMin: renovation,
+            xMax: renovation + 1,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            label: {
+                content: "rekonstrukce",
+                display: true,
+                rotation: 90
+            }
+        };
+    });
+
+    chart = new Chart(
+        document.getElementById("chart"),
+        {
+            type: "line",
+            data: {
+                labels: Array.from({length: duration + 1}, (_, i) => i),
+                datasets: [
+                    {
+                        label: `Varianta: ${options[0]}`,
+                        data: renting
+                    },
+                    {
+                        label: `Varianta: ${options[1]}`,
+                        data: buying
+                    },
+                ]
+            },
+            options: {
+                plugins: {
+                    title: {
+                        display: true,
+                        text: "Vývoj čistého jmění v jednotlivých letech"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: tooltipItems => `Čisté jmění v roce ${tooltipItems[0].label}`
+                        }
+                    },
+                    annotation: {
+                        annotations
+                    }
+                }
+            }
+        }
+    );
+
+    let canvas = document.createElement("canvas");
+    canvas.width = chart.canvas.width;
+    canvas.height = chart.canvas.height;
+    blank = canvas.toDataURL();
+
+    let option = options[Number(buying[buying.length - 1] > renting[renting.length - 1])]
+
     document.getElementById("result").textContent = `V tomto případě se více vyplatí ${option}.`;
     document.getElementById("result-renting-text").textContent = rentText;
-    document.getElementById("result-renting").textContent = formatNumber(Math.round(renting));
-    document.getElementById("result-buying").textContent = formatNumber(Math.round(profit));
-    document.getElementById("result-costs").textContent = formatNumber(Math.round(buying));
+    document.getElementById("result-renting").textContent = formatNumber(Math.round(rentingCosts));
+    document.getElementById("result-increased-price").textContent = formatNumber(Math.round(increasedPrice));
+    document.getElementById("result-selling-profit").textContent = formatNumber(Math.round(increasedPrice - priceProgress[0] - saleTax));
+    document.getElementById("result-costs").textContent = formatNumber(Math.round(buyingCosts));
     document.getElementById("result-opportunity-costs").textContent = formatNumber(Math.round(opportunityCosts));
 }
 
 function calculateInterests(years) {
-    let mortgage = parseInt(document.getElementById("mortgage").textContent.replaceAll("\xa0", ""), 10) || 0,
-        payment = parseInt(document.getElementById("payment").textContent.replaceAll("\xa0", ""), 10) || 0,
+    let mortgage = getNumber("mortgage", true),
+        payment = getNumber("payment", true),
         monthlyRate = parseFloat(document.getElementById("interest-rate").value) / (100 * 12),
         interests = [];
 
@@ -441,25 +617,25 @@ function calculateIncomeTax() {
     let isRental = document.getElementById("purpose").value === "rental",
         minDuration = isRental ? 10 : 2,
         duration = parseInt(document.getElementById("duration").value, 10) || 0,
-        buyingPrice = parseInt(document.getElementById("buying-price").value.replaceAll("\xa0", ""), 10) || 0,
-        buyingPriceIncrease = parseInt(document.getElementById("buying-price-increase").value, 10) || 0,
-        rentingPrice = parseInt(document.getElementById("renting-price").value.replaceAll("\xa0", ""), 10) || 0,
+        priceProgress = getPriceProgress(duration),
+        rentingPrice = getNumber("renting-price"),
         rentingPriceIncrease = parseInt(document.getElementById("renting-price-increase").value, 10) || 0,
+        renovationCosts = parseFloat(document.getElementById("renovation-costs").value) || 0,
         monthlyRate = parseFloat(document.getElementById("interest-rate").value) / (100 * 12),
         isSelfEmployed = document.getElementById("self-employed").checked,
-        depreciationRate = parseFloat(document.getElementById("depreciation").value) || 0,
         annualTax = 0,
         saleTax = 0,
         totalExpenses = 0,
         totalRealExpenses = 0;
 
     if (isRental) {
-        let residualPrice = buyingPrice,
+        let residualPrice = priceProgress[0],
             interests = calculateInterests(duration),
-            hoa = parseInt(document.getElementById("hoa").value.replaceAll("\xa0", ""), 10) || 0,
-            insurance = parseInt(document.getElementById("insurance").value.replaceAll("\xa0", ""), 10) || 0,
-            propertyTax = parseInt(document.getElementById("property-tax").value.replaceAll("\xa0", ""), 10) || 0,
-            allowableDepreciation = parseInt(document.getElementById("allowable-depreciation").value.replaceAll("\xa0", ""), 10) || 0;
+            hoa = getNumber("hoa"),
+            insurance = getNumber("insurance"),
+            propertyTax = getNumber("property-tax"),
+            renovations = getRenovations(duration),
+            maintenance = parseFloat(document.getElementById("maintenance").value);
 
         for (let i = 0; i < duration; i++) {
             let income = Math.round(rentingPrice * Math.pow(1 + rentingPriceIncrease / 100, i)) * 12,
@@ -473,7 +649,11 @@ function calculateIncomeTax() {
                 residualPrice = 0;
             }
 
-            let realExpenses = writeOff + interests[i] + 12 * hoa + insurance + propertyTax + allowableDepreciation;
+            if (renovations.includes(i)) {
+                residualPrice += priceProgress[i] * renovationCosts / 100;
+            }
+
+            let realExpenses = writeOff + interests[i] + 12 * hoa + insurance + propertyTax + Math.min(priceProgress[i] * maintenance / 100, MAINTENANCE_CEILING);
             totalExpenses += expenses;
             totalRealExpenses += realExpenses;
 
@@ -494,16 +674,12 @@ function calculateIncomeTax() {
         annualTax /= duration;
     }
 
-    document.getElementById("depreciation-costs").textContent = formatNumber(
-        Math.round(depreciationRate / 100 * buyingPrice * (1 + Math.pow(1 + buyingPriceIncrease / 100, duration)) / 2)
-    );
-
     document.getElementById("expenses").textContent = formatNumber(Math.round(totalExpenses / duration));
     document.getElementById("real-expenses").textContent = formatNumber(Math.round(totalRealExpenses / duration));
     document.getElementById("annual-tax").textContent = formatNumber(Math.round(annualTax));
 
-    if (duration < minDuration && buyingPriceIncrease > 0) {
-        saleTax = INCOME_TAX * buyingPrice * (Math.pow(1 + buyingPriceIncrease / 100, duration) - 1);
+    if (duration < minDuration) {
+        saleTax = INCOME_TAX * Math.max(priceProgress[duration - 1] - priceProgress[0], 0);
     }
 
     document.getElementById("sale-tax").textContent = formatNumber(saleTax);
@@ -516,14 +692,17 @@ document.addEventListener("DOMContentLoaded", async function() {
     prices = await response.json();
     fillLocations();
     setPrice();
+    estimateMaintenance();
 
     let typeInput = document.getElementById("type"),
         areaInput = document.getElementById("area"),
         locationInput = document.getElementById("location");
 
     typeInput.addEventListener("change", setPrice);
+    typeInput.addEventListener("change", estimateMaintenance);
     locationInput.addEventListener("change", setPrice);
     areaInput.addEventListener("change", setPrice);
+    document.getElementById("condition").addEventListener("change", setPrice);
 
     [
         "buying-price",
@@ -533,7 +712,6 @@ document.addEventListener("DOMContentLoaded", async function() {
         "insurance",
         "hoa",
         "property-tax",
-        "allowable-depreciation"
     ].forEach(function(identifier) {
         let input = document.getElementById(identifier);
 
@@ -594,15 +772,29 @@ document.addEventListener("DOMContentLoaded", async function() {
         "renting-price",
         "renting-price-increase",
         "commission",
-        "depreciation",
         "opportunity-costs",
         "hoa",
+        "maintenance",
+        "renovation-frequency",
+        "renovation-costs",
         "property-tax",
         "duration",
         "purpose",
-        "allowable-depreciation",
         "self-employed"
     ].forEach(function(identifier) {
         document.getElementById(identifier).addEventListener("change", calculateProfitability);
+    });
+
+    let scrollTimeout;
+
+    window.addEventListener("scroll", () => {
+        clearTimeout(scrollTimeout);
+
+        scrollTimeout = setTimeout(() => {
+            // fixing an annoying state in which the chart is blank
+            if (blank === chart.canvas.toDataURL()) {
+                chart.render();
+            }
+        }, 100);
     });
 });

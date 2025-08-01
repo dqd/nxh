@@ -13,7 +13,9 @@
     <link rel="icon" href="./favicon.png" type="image/png">
     <link rel="stylesheet" type="text/css" href="./css/pico.classless.pumpkin.min.css">
     <link rel="stylesheet" type="text/css" href="./css/style.css?1">
-    <script type="text/javascript" src="./js/script.js?2"></script>
+    <script type="text/javascript" src="./js/chart.min.js"></script>
+    <script type="text/javascript" src="./js/chart-plugin-annotation.min.js"></script>
+    <script type="text/javascript" src="./js/script.js?3"></script>
 </head>
 
 <body>
@@ -50,6 +52,16 @@
                     </div>
                     <div class="unit">m&sup2;</div>
                 </div>
+            </label>
+            <label>
+                Stav nemovitosti
+                <select name="condition" id="condition">
+                    <option value="10">Novostavba/po rekonstrukci (0% opotřebení)</option>
+                    <option value="0" selected>Velmi dobrý (25% opotřebení)</option>
+                    <option value="-10">Dobrý (50% opotřebení)</option>
+                    <option value="-20">Špatný (75% opotřebení)</option>
+                    <option value="-30">Před rekonstrukcí (100% opotřebení)</option>
+                </select>
             </label>
         </article>
         <article>
@@ -115,7 +127,7 @@
                 </div>
                 <div class="form-group">
                     <div class="full-width">
-                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="4">
+                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="5">
                     </div>
                     <div class="unit">%/rok</div>
                 </div>
@@ -181,24 +193,48 @@
             </table>
         </article>
         <article>
-            <header>Náklady</header>
+            <header>Opotřebení nemovitosti</header>
             <label>
-                Opotřebení nemovitosti
+                Průměrné výdaje na opravy a údržbu
                 <div class="form-group">
                     <div class="full-width">
-                        <input name="depreciation" id="depreciation" type="number" min="0" step="any" value="1">
-                        <small>Náklady na údržbu a&nbsp;na rekonstrukci. Počítá se z&nbsp;ceny nemovitosti, což vychází
-                            v&nbsp;průměru na <span id="depreciation-costs"></span>&nbsp;Kč.</small>
+                        <input name="maintenance" id="maintenance" type="number" min="0" step="any">
+                        <small>Jakou část ceny nemovitosti budeme dávat na opravy a&nbsp;údržbu. První rok to odpovídá
+                            <span id="maintenance-costs"></span>&nbsp;Kč.</small>
                     </div>
                     <div class="unit">%/rok</div>
                 </div>
             </label>
             <label>
+                Četnost rekonstrukce
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="renovation-frequency" id="renovation-frequency" type="number" min="0" value="30">
+                        <small>Jak často je potřeba rekonstruovat nemovitost.</small>
+                    </div>
+                    <div class="unit">roků</div>
+                </div>
+            </label>
+            <label>
+                Cena rekonstrukce
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="renovation-costs" id="renovation-costs" type="number" min="0" step="any"
+                            value="30">
+                        <small>Jakou část ceny nemovitosti bude stát rekonstrukce.</small>
+                    </div>
+                    <div class="unit">%</div>
+                </div>
+            </label>
+        </article>
+        <article>
+            <header>Náklady</header>
+            <label>
                 Náklady obětované příležitosti
                 <div class="form-group">
                     <div class="full-width">
                         <input name="opportunity-costs" id="opportunity-costs" type="number" min="0" step="any"
-                            value="10">
+                            value="8">
                         <small>Jaký průměrný výnos by byl z&nbsp;alternativního investování nevyužitých
                             prostředků.</small>
                     </div>
@@ -275,18 +311,6 @@
         <article>
             <header>Daň z&nbsp;příjmů fyzických osob</header>
             <label>
-                Průměrné výdaje na opravy a udržování majetku
-                <div class="form-group">
-                    <div class="full-width">
-                        <input name="allowable-depreciation" id="allowable-depreciation" type="text"
-                            value="10&nbsp;000">
-                        <small>Zákonný limit je 80&nbsp;000&nbsp;Kč ročně. Nad tuto částku se jedná o technické
-                            zhodnocení, které přechází do odpisů.</small>
-                    </div>
-                    <div class="unit">Kč/rok</div>
-                </div>
-            </label>
-            <label>
                 <input name="self-employed" id="self-employed" type="checkbox" role="switch">
                 Jsem <span data-tooltip="Osoba samostatně výdělečně činná">OSVČ</span> a&nbsp;neplatím paušální daň
             </label>
@@ -341,10 +365,16 @@
         <article>
             <header>Výsledek</header>
             <p id="result"></p>
+            <canvas id="chart"></canvas>
+            <hr>
             <table>
                 <tr>
+                    <th>Cena nemovitosti při prodeji</th>
+                    <td><span id="result-increased-price"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
                     <th>Zisk z&nbsp;prodeje nemovitosti</th>
-                    <td><span id="result-buying"></span>&nbsp;Kč</td>
+                    <td><span id="result-selling-profit"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
                     <th>Náklady na zakoupenou nemovitost</th>
@@ -359,6 +389,25 @@
                     <td><span id="result-opportunity-costs"></span>&nbsp;Kč</td>
                 </tr>
             </table>
+        </article>
+        <article>
+            <h2>Použitý model</h2>
+            <p>Na začátku mám našetřený nějaký obnos peněz a&nbsp;chci se rozhodnout jak s&nbsp;ním v&nbsp;určitém
+                časovém horizontu naložit. Mám dvě možnosti:</p>
+            <ol>
+                <li>Použít našetřený obnos na částečné financování koupě nemovitosti a&nbsp;zbytek nechat zaplatit banku
+                    přes hypoteční úvěr. Další roky hradím veškeré náklady na provoz nemovitosti, včetně údržby
+                    a&nbsp;rekonstrukce. Jakmile splatím úvěr, nemovitost se stává mým majetkem. Na konci uvažovaného
+                    období nemovitost prodám.</li>
+                <li>Za našetřený obnos nakoupím cenné papíry a&nbsp;každý rok přikupuji další, pokud budu mít nějaké
+                    volné finanční prostředky oproti první variantě. Na konci období cenné papíry prodám.
+                </li>
+            </ol>
+            <p>Výsledné čisté jmění napoví, která z&nbsp;možností je finančně výhodnější.</p>
+            <p>Koupi nemovitosti mohu posuzovat z&nbsp;pohledu spotřebitele (v&nbsp;nemovitosti bydlím) nebo investora
+                (nemovitost pronajímám). V&nbsp;obou případech je finanční stránka věci důležitá. Jelikož se jedná
+                o&nbsp;zásadní a pro leckoho největší životní rozhodnutí, výsledná volba by neměla být založeno pouze na
+                dojmech a&nbsp;emocích, měla by být podpořena relevantními čísly.</p>
         </article>
     </main>
     <footer>
