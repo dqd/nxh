@@ -277,11 +277,16 @@ function calculateLTV() {
 }
 
 function estimateMaintenance() {
-    let price = getNumber("buying-price"),
-        type = document.getElementById("type").value,
+    let type = document.getElementById("type").value,
         maintenance = (type == "apartment" ? 1 : 2) * MAINTENANCE_DEFAULT;
 
     document.getElementById("maintenance").value = maintenance;
+    quantifyMaintenance();
+}
+
+function quantifyMaintenance() {
+    let price = getNumber("buying-price"),
+        maintenance = parseFloat(document.getElementById("maintenance").value) || 0;
     document.getElementById("maintenance-costs").textContent = formatNumber(price * maintenance / 100);
 }
 
@@ -745,7 +750,9 @@ document.addEventListener("DOMContentLoaded", async function() {
     let priceInput = document.getElementById("buying-price");
     priceInput.addEventListener("change", calculateMortgage);
     priceInput.addEventListener("change", estimateInsurance);
+    priceInput.addEventListener("change", quantifyMaintenance);
 
+    document.getElementById("maintenance").addEventListener("change", quantifyMaintenance);
     document.getElementById("renting-price").addEventListener("change", estimateCommission);
 
     document.getElementById("ltv").addEventListener("change", calculateMortgage);
