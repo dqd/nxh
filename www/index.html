@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="./css/style.css?1">
     <script type="text/javascript" src="./js/chart.min.js"></script>
     <script type="text/javascript" src="./js/chart-plugin-annotation.min.js"></script>
-    <script type="text/javascript" src="./js/script.js?3"></script>
+    <script type="text/javascript" src="./js/script.js?4"></script>
 </head>
 
 <body>
@@ -230,18 +230,6 @@
         <article>
             <header>Náklady</header>
             <label>
-                Náklady obětované příležitosti
-                <div class="form-group">
-                    <div class="full-width">
-                        <input name="opportunity-costs" id="opportunity-costs" type="number" min="0" step="any"
-                            value="8">
-                        <small>Jaký průměrný výnos by byl z&nbsp;alternativního investování nevyužitých
-                            prostředků.</small>
-                    </div>
-                    <div class="unit">%/rok</div>
-                </div>
-            </label>
-            <label>
                 Pojištění nemovitosti
                 <div class="form-group">
                     <div class="full-width">
@@ -342,9 +330,16 @@
             </p>
         </article>
         <article>
-            <header>Vlastnictví</header>
+            <header>Parametry porovnání</header>
             <label>
-                Doba vlastnictví nemovitosti
+                Účel vlastnictví nemovitosti
+                <select name="purpose" id="purpose">
+                    <option value="inhabitation">Budu v&nbsp;nemovitosti bydlet</option>
+                    <option value="rental">Nemovitost pronajmu jiným osobám</option>
+                </select>
+            </label>
+            <label>
+                Časový horizont
                 <div class="form-group">
                     <div class="full-width">
                         <input name="duration" id="duration" type="number" min="1" value="10">
@@ -355,11 +350,16 @@
                 </div>
             </label>
             <label>
-                Účel vlastnictví
-                <select name="purpose" id="purpose">
-                    <option value="inhabitation">Budu v&nbsp;nemovitosti bydlet</option>
-                    <option value="rental">Nemovitost pronajmu jiným osobám</option>
-                </select>
+                Výnosnost alternativní investice
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="opportunity-costs" id="opportunity-costs" type="number" min="0" step="any"
+                            value="8">
+                        <small>Jaké zhodnocení v&nbsp;průměru očekávám při investování nevyužitých
+                            prostředků někam jinam.</small>
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
             </label>
         </article>
         <article>
@@ -377,8 +377,12 @@
                     <td><span id="result-selling-profit"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
-                    <th>Náklady na zakoupenou nemovitost</th>
+                    <th>Náklady zakoupené nemovitosti</th>
                     <td><span id="result-costs"></span>&nbsp;Kč</td>
+                </tr>
+                <tr>
+                    <th>Celkové vlastní zdroje</th>
+                    <td><span id="result-paid"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
                     <th><span id="result-renting-text"></span></th>

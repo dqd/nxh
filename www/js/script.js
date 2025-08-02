@@ -446,6 +446,7 @@ function calculateProfitability() {
         buyingCosts = 0,
         opportunityCosts = 0,
         extra = 0,
+        paid = downpayment,
         increasedPrice = priceProgress[0],
         remainingMortgage = getNumber("mortgage", true),
         increments = [];
@@ -484,6 +485,7 @@ function calculateProfitability() {
             extra += compensation;
         }
 
+        paid += costs + compensation;
         opportunityCosts += increment;
         increasedPrice += growth;
         rentingCosts += rent;
@@ -583,6 +585,7 @@ function calculateProfitability() {
     document.getElementById("result-renting").textContent = formatNumber(Math.round(rentingCosts));
     document.getElementById("result-increased-price").textContent = formatNumber(Math.round(increasedPrice));
     document.getElementById("result-selling-profit").textContent = formatNumber(Math.round(increasedPrice - priceProgress[0] - saleTax));
+    document.getElementById("result-paid").textContent = formatNumber(Math.round(paid));
     document.getElementById("result-costs").textContent = formatNumber(Math.round(buyingCosts));
     document.getElementById("result-opportunity-costs").textContent = formatNumber(Math.round(opportunityCosts));
 }
