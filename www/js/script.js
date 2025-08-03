@@ -443,61 +443,59 @@ function calculateProfitability() {
         maintenance = parseFloat(document.getElementById("maintenance").value),
         renovations = getRenovations(duration),
         renovationCosts = parseFloat(document.getElementById("renovation-costs").value) || 0,
-        renting = [downpayment],
+        investing = [downpayment],
         buying = [downpayment],
-        investment = downpayment,
-        equity = downpayment,
+        investingEquity = downpayment,
+        buyingEquity = downpayment,
         rentingCosts = 0,
         buyingCosts = 0,
         opportunityCosts = 0,
-        extra = 0,
-        paid = downpayment,
+        selfFinanced = downpayment,
         increasedPrice = priceProgress[0],
         remainingMortgage = getNumber("mortgage", true),
         increments = [];
 
     interests.forEach(function(interest, i) {
         let rent = Math.round(rentingPrice * Math.pow(1 + rentingPriceIncrease / 100, i)) * 12 * (isRental ? (1 - INCOME_TAX) : 1),
-            costs = interest + priceProgress[i] * maintenance / 100 + insurance + hoa + propertyTax + annualTax,
+            costs = priceProgress[i] * maintenance / 100 + insurance + hoa + propertyTax + annualTax,
             growth = priceProgress[i + 1] - priceProgress[i],
-            increment = investment * opportunityRate / 100;
+            increment = investingEquity * opportunityRate / 100;
 
         if (renovations.includes(i)) {
             costs += priceProgress[i] * renovationCosts / 100;
         }
 
         if (remainingMortgage > 0) {
+            payment = Math.min(payment, remainingMortgage);
             remainingMortgage -= payment;
-            growth += payment;
         } else {
-            remainingMortgage = 0;
+            payment = 0;
         }
 
-        let compensation;
+        let paid;
 
         if (isRental) {
-            compensation = costs > growth ? costs - growth : 0;
-            investment += increment + costs + compensation;
-            equity += growth - costs + compensation + rent;
+            paid = payment + costs - rent;
+            investingEquity += increment + paid;
+            buyingEquity += growth + payment - interest - costs + rent;
         } else {
             if (!i) {
                 rent += commission;
             }
 
-            compensation = rent > costs ? rent - costs : 0;
-            investment += increment + costs - rent + compensation;
-            equity += growth - costs + compensation + extra * opportunityRate / 100;
-            extra += compensation;
+            paid = payment + costs;
+            investingEquity += increment + paid - rent;
+            buyingEquity += growth + payment - interest - costs;
         }
 
-        paid += costs + compensation;
+        selfFinanced += Math.max(paid, 0);
         opportunityCosts += increment;
         increasedPrice += growth;
         rentingCosts += rent;
-        buyingCosts += costs;
+        buyingCosts += costs + interest;
 
-        renting.push(Math.round(investment));
-        buying.push(Math.round(equity));
+        investing.push(Math.round(investingEquity));
+        buying.push(Math.round(buyingEquity));
         increments.push(increment);
     });
 
@@ -505,7 +503,7 @@ function calculateProfitability() {
         (acc, x) => acc + x * INCOME_TAX, 0
     );
     opportunityCosts -= investmentTax;
-    renting[renting.length - 1] -= Math.round(investmentTax);
+    investing[investing.length - 1] -= Math.round(investmentTax);
 
     buyingCosts += saleTax;
     buying[buying.length - 1] -= Math.round(saleTax);
@@ -551,7 +549,7 @@ function calculateProfitability() {
                 datasets: [
                     {
                         label: `Varianta: ${options[0]}`,
-                        data: renting
+                        data: investing
                     },
                     {
                         label: `Varianta: ${options[1]}`,
@@ -583,14 +581,14 @@ function calculateProfitability() {
     canvas.height = chart.canvas.height;
     blank = canvas.toDataURL();
 
-    let option = options[Number(buying[buying.length - 1] > renting[renting.length - 1])]
+    let option = options[Number(buying[buying.length - 1] > investing[investing.length - 1])]
 
     document.getElementById("result").textContent = `V tomto případě se více vyplatí ${option}.`;
     document.getElementById("result-renting-text").textContent = rentText;
     document.getElementById("result-renting").textContent = formatNumber(Math.round(rentingCosts));
     document.getElementById("result-increased-price").textContent = formatNumber(Math.round(increasedPrice));
     document.getElementById("result-selling-profit").textContent = formatNumber(Math.round(increasedPrice - priceProgress[0] - saleTax));
-    document.getElementById("result-paid").textContent = formatNumber(Math.round(paid));
+    document.getElementById("result-self-financed").textContent = formatNumber(Math.round(selfFinanced));
     document.getElementById("result-costs").textContent = formatNumber(Math.round(buyingCosts));
     document.getElementById("result-opportunity-costs").textContent = formatNumber(Math.round(opportunityCosts));
 }

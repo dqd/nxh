@@ -15,7 +15,7 @@
     <link rel="stylesheet" type="text/css" href="./css/style.css?1">
     <script type="text/javascript" src="./js/chart.min.js"></script>
     <script type="text/javascript" src="./js/chart-plugin-annotation.min.js"></script>
-    <script type="text/javascript" src="./js/script.js?5"></script>
+    <script type="text/javascript" src="./js/script.js?6"></script>
 </head>
 
 <body>
@@ -81,18 +81,6 @@
                     <div class="unit">Kč</div>
                 </div>
             </label>
-            <label>
-                <div class="form-group stretched">
-                    <div>Očekávaný růst ceny nemovitosti</div>
-                    <div class="info">Od předchozího období <span id="buying-price-difference"></span></div>
-                </div>
-                <div class="form-group">
-                    <div class="full-width">
-                        <input name="buying-price-increase" id="buying-price-increase" type="number" value="5">
-                    </div>
-                    <div class="unit">%/rok</div>
-                </div>
-            </label>
         </article>
         <article>
             <header>Nájemné</header>
@@ -118,18 +106,6 @@
                         <input name="commission" id="commission" type="text">
                     </div>
                     <div class="unit">Kč</div>
-                </div>
-            </label>
-            <label>
-                <div class="form-group stretched">
-                    <div>Očekávaný růst nájemného</div>
-                    <div class="info">Od předchozího období <span id="renting-price-difference"></span></div>
-                </div>
-                <div class="form-group">
-                    <div class="full-width">
-                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="5">
-                    </div>
-                    <div class="unit">%/rok</div>
                 </div>
             </label>
         </article>
@@ -209,7 +185,7 @@
                 Četnost rekonstrukce
                 <div class="form-group">
                     <div class="full-width">
-                        <input name="renovation-frequency" id="renovation-frequency" type="number" min="0" value="30">
+                        <input name="renovation-frequency" id="renovation-frequency" type="number" min="0" value="40">
                         <small>Jak často je potřeba rekonstruovat nemovitost.</small>
                     </div>
                     <div class="unit">roků</div>
@@ -350,6 +326,30 @@
                 </div>
             </label>
             <label>
+                <div class="form-group stretched">
+                    <div>Očekávaný růst ceny nemovitosti</div>
+                    <div class="info">Od předchozího období <span id="buying-price-difference"></span></div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="buying-price-increase" id="buying-price-increase" type="number" value="5">
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+            <label>
+                <div class="form-group stretched">
+                    <div>Očekávaný růst nájemného</div>
+                    <div class="info">Od předchozího období <span id="renting-price-difference"></span></div>
+                </div>
+                <div class="form-group">
+                    <div class="full-width">
+                        <input name="renting-price-increase" id="renting-price-increase" type="number" value="5">
+                    </div>
+                    <div class="unit">%/rok</div>
+                </div>
+            </label>
+            <label>
                 Výnosnost alternativní investice
                 <div class="form-group">
                     <div class="full-width">
@@ -382,7 +382,7 @@
                 </tr>
                 <tr>
                     <th>Celkové vlastní zdroje</th>
-                    <td><span id="result-paid"></span>&nbsp;Kč</td>
+                    <td><span id="result-self-financed"></span>&nbsp;Kč</td>
                 </tr>
                 <tr>
                     <th><span id="result-renting-text"></span></th>
