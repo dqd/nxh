@@ -258,7 +258,7 @@ function calculateMortgage() {
     let price = getNumber("buying-price"),
         ltv = parseFloat(document.getElementById("ltv").value);
 
-    if (ltv) {
+    if (ltv >= 0) {
         let mortgage = Math.round(price * ltv / 100);
         document.getElementById("downpayment").value = formatNumber(price - mortgage);
         calculatePayments(mortgage);
@@ -425,7 +425,10 @@ function showPropertyTaxCalculation() {
 function calculateProfitability() {
     calculateIncomeTax();
 
-    let isRental = document.getElementById("purpose").value === "rental",
+    let purpose = document.getElementById("purpose").value,
+        isRental = purpose === "rental",
+        isInhabitation = purpose === "inhabitation",
+        isSpeculation = purpose === "speculation",
         rentingPrice = getNumber("renting-price"),
         rentingPriceIncrease = parseInt(document.getElementById("renting-price-increase").value, 10) || 0,
         commission = getNumber("commission"),
@@ -457,9 +460,9 @@ function calculateProfitability() {
 
     interests.forEach(function(interest, i) {
         let rent = Math.round(rentingPrice * Math.pow(1 + rentingPriceIncrease / 100, i)) * 12 * (isRental ? (1 - INCOME_TAX) : 1),
-            costs = priceProgress[i] * maintenance / 100 + insurance + hoa + propertyTax + annualTax,
+            costs = priceProgress[i] * maintenance / 100 + insurance + 12 * hoa + propertyTax + annualTax,
             growth = priceProgress[i + 1] - priceProgress[i],
-            increment = investingEquity * opportunityRate / 100;
+            increment = investingEquity > 0 ? investingEquity * opportunityRate / 100 : 0;
 
         if (renovations.includes(i)) {
             costs += priceProgress[i] * renovationCosts / 100;
@@ -478,7 +481,7 @@ function calculateProfitability() {
             paid = payment + costs - rent;
             investingEquity += increment + paid;
             buyingEquity += growth + payment - interest - costs + rent;
-        } else {
+        } else if (isInhabitation) {
             if (!i) {
                 rent += commission;
             }
@@ -486,13 +489,20 @@ function calculateProfitability() {
             paid = payment + costs;
             investingEquity += increment + paid - rent;
             buyingEquity += growth + payment - interest - costs;
+        } else {
+            paid = payment + costs;
+            investingEquity += increment + paid;
+            buyingEquity += growth + payment - interest - costs;
         }
 
         selfFinanced += Math.max(paid, 0);
         opportunityCosts += increment;
         increasedPrice += growth;
-        rentingCosts += rent;
         buyingCosts += costs + interest;
+
+        if (!isSpeculation) {
+            rentingCosts += rent;
+        }
 
         investing.push(Math.round(investingEquity));
         buying.push(Math.round(buyingEquity));
@@ -514,9 +524,12 @@ function calculateProfitability() {
     if (isRental) {
         options = ["investovat jinam", "koupit a pronajímat nemovitost"];
         rentText = "Výnosy z pronájmu po zdanění";
-    } else {
+    } else if (isInhabitation) {
         options = ["jít do pronájmu", "koupit nemovitost"];
         rentText = "Zaplaceno za nájemné";
+    } else {
+        options = ["investovat jinam", "koupit a prodat nemovitost"];
+        rentText = "Výnosy z pronájmu";
     }
 
     if (chart) {
@@ -620,8 +633,8 @@ function calculateInterests(years) {
 }
 
 function calculateIncomeTax() {
-    let isRental = document.getElementById("purpose").value === "rental",
-        minDuration = isRental ? 10 : 2,
+    let purpose = document.getElementById("purpose").value,
+        minDuration = purpose === "inhabitation" ? 2 : 10,
         duration = parseInt(document.getElementById("duration").value, 10) || 0,
         priceProgress = getPriceProgress(duration),
         rentingPrice = getNumber("renting-price"),
@@ -634,7 +647,7 @@ function calculateIncomeTax() {
         totalExpenses = 0,
         totalRealExpenses = 0;
 
-    if (isRental) {
+    if (purpose === "rental") {
         let residualPrice = priceProgress[0],
             interests = calculateInterests(duration),
             hoa = getNumber("hoa"),
@@ -673,7 +686,7 @@ function calculateIncomeTax() {
         }
 
         annualTax /= duration;
-    } else if (monthlyRate) {
+    } else if (purpose === "inhabitation" && monthlyRate) {
         calculateInterests(duration).forEach(function(interest) {
             annualTax -= INCOME_TAX * Math.min(interest, MORTGAGE_CEILING);
         });
