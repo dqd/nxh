@@ -7,6 +7,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
@@ -39,4 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Keep scheduled workflow activity
-        uses: WaterLemons2k/scheduled-workflow-activity-action@v1
+        uses: WaterLemons2k/scheduled-workflow-activity-action@v2
+        env:
+          GH_TOKEN: ${{ github.token }}
